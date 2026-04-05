@@ -11,28 +11,37 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class TaskService {
 
-    private final DatabaseReference dbRef =
-            FirebaseDatabase.getInstance().getReference("tasks");
+    // ✅ Lazy initialization (IMPORTANT FIX)
+    private DatabaseReference getDbRef() {
+        return FirebaseDatabase.getInstance().getReference("tasks");
+    }
 
     // ✅ CREATE
     public void addTask(Task task) {
+        DatabaseReference dbRef = getDbRef();
+
         String id = dbRef.push().getKey();
         task.setId(id);
+
         dbRef.child(id).setValueAsync(task);
     }
 
     // ✅ READ (ALL)
     public CompletableFuture<List<Task>> getAllTasks() {
+        DatabaseReference dbRef = getDbRef();
+
         CompletableFuture<List<Task>> future = new CompletableFuture<>();
 
         dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 List<Task> list = new ArrayList<>();
+
                 for (DataSnapshot data : snapshot.getChildren()) {
                     Task task = data.getValue(Task.class);
                     list.add(task);
                 }
+
                 future.complete(list);
             }
 
@@ -47,12 +56,16 @@ public class TaskService {
 
     // ✅ UPDATE
     public void updateTask(String id, Task task) {
+        DatabaseReference dbRef = getDbRef();
+
         task.setId(id);
         dbRef.child(id).setValueAsync(task);
     }
 
     // ✅ DELETE
     public void deleteTask(String id) {
+        DatabaseReference dbRef = getDbRef();
+
         dbRef.child(id).removeValueAsync();
     }
 }
