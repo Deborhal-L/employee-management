@@ -10,12 +10,14 @@ import java.io.InputStream;
 
 @Configuration
 public class FirebaseConfig {
-
     @PostConstruct
     public void init() {
-        try {
-            InputStream serviceAccount =
-                    getClass().getClassLoader().getResourceAsStream("firebase-key.json");
+        try (InputStream serviceAccount =
+                     getClass().getClassLoader().getResourceAsStream("firebase-key.json")) {
+
+            if (serviceAccount == null) {
+                throw new RuntimeException("firebase-key.json not found in resources folder");
+            }
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
